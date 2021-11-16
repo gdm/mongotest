@@ -5,5 +5,6 @@ ENV NODE_ENV production
 WORKDIR /usr/src/app
 COPY --chown=node:node . .
 RUN npm ci --only=production
+RUN mkdir -p /var/log/nodeapp && chown node:node /var/log/nodeapp
 USER node
 CMD ["dumb-init", "node", "index.js"]

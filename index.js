@@ -4,6 +4,31 @@
 
 const { MongoClient } = require("mongodb");
 const http = require("http");
+const winston = require('winston');
+
+// logging part was taken from https://www.section.io/engineering-education/logging-with-winston/
+const logConfiguration = {
+    transports: [
+        new winston.transports.Console({
+            level: 'info'
+        }),
+        new winston.transports.File({
+            level: 'info',
+            filename: '/var/log/nodeapp/application.log'
+        })
+    ],
+		format: winston.format.combine(
+        winston.format.label({
+            label: `Label🏷️`
+        }),
+        winston.format.timestamp({
+           format: 'YYYY-MM-DD HH:mm:ss'
+       }),
+        winston.format.printf(info => `${[info.timestamp]} ${info.level}: ${info.label}: ${info.message}`),
+    )
+};
+
+const logger = winston.createLogger(logConfiguration);
 
 const uri =
    `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@${process.env.MONGODB_URL}?retryWrites=true&writeConcern=majority`;
@@ -13,8 +38,9 @@ const client = new MongoClient(uri);
 async function listDatabases(client, res){
   databasesList = await client.db().admin().listDatabases();
 
-  console.log("Databases:");
-  databasesList.databases.forEach(db => console.log(` - ${db.name}`));
+  let plain_line = "Databases: ";
+  databasesList.databases.forEach(db => plain_line += ` ${db.name}`);
+  logger.info(plain_line);
 
   res.setHeader("Content-Type", "text/html");
   res.writeHead(200);
@@ -31,7 +57,7 @@ async function requestListener (req, res) {
     await client.connect();
     // Establish and verify connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Connected successfully to server");
+    logger.info("Connected successfully to server");
     await listDatabases(client,res);
   } finally {
     // Ensures that the client will close when you finish/error
@@ -42,7 +68,7 @@ async function requestListener (req, res) {
 
 const server = http.createServer(requestListener);
 server.listen(port, host, () => {
-   console.log(`Server is running on http://${host}:${port}`);
+   logger.info(`Server is running on http://${host}:${port}`);
 });
 
 
