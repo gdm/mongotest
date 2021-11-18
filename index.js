@@ -48,7 +48,7 @@ async function listDatabases(client, res){
   databasesList.databases.forEach(db => res.write(` - ${db.name}\n`));
 };
 
-const host = 'localhost';
+const host = '0.0.0.0';
 const port = 8000;
 
 async function requestListener (req, res) {
